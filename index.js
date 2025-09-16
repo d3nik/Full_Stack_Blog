@@ -7,6 +7,7 @@ import { validationResult } from 'express-validator';
 import { registerValidation } from './validations/auth.js';
 
 import UserModel from './models/User.js';
+import checkAuth from './utils/checkAuth.js';
 
 mongoose.connect(
     'mongodb+srv://admin:admin211210@cluster0.xyzqtx2.mongodb.net/blog?retryWrites=true&w=majority'
@@ -104,6 +105,27 @@ app.post('/auth/register', registerValidation, async (req, res) => {
         message: 'Failed to register user',
      });
   }
+});
+
+app.get('/auth/me', checkAuth, async (req, res) => {
+    try {
+        const user = await UserModel.findById(req.userId);
+
+        if (!user) {
+            return res.status(404).json({
+                message: 'User not found',
+            });
+        }
+
+        const { passwordHash, ...userData } = user._doc;
+
+        res.json(userData);
+    } catch (error) {
+        console.error('Auth error:', error);
+        res.status(500).json({
+            message: 'No access',
+        });
+    }
 });
 
 app.listen(3021, (err) => {
