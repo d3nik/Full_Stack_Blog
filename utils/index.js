@@ -1,2 +1,2 @@
-export { default as checkAuth } from './utils/checkAuth.js';
-export { default as handleValidationError } from './utils/handleValidationError.js';
+export { default as checkAuth } from './checkAuth.js';
+export { default as handleValidationError } from './handleValidationError.js';

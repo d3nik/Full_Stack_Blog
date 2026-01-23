@@ -1,6 +1,7 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import multer from 'multer';
+import cors from 'cors';
 
 import { loginValidation, postCreateValidation, registerValidation } from './validations.js';
 import { UserController, PostController } from './controllers/index.js';
@@ -25,6 +26,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 app.use(express.json());
+app.use(cors());
 app.use('/uploads', express.static('uploads'));
 
 app.post('/auth/login', loginValidation, handleValidationError, UserController.login);
@@ -47,10 +49,10 @@ app.post('/posts', checkAuth, postCreateValidation, handleValidationError, PostC
 app.delete('/posts/:id', checkAuth, PostController.removePost);
 app.patch('/posts/:id', checkAuth, postCreateValidation, handleValidationError, PostController.updatePost);
 
-app.listen(3021, (err) => {
+app.listen(4021, (err) => {
     if(err) {
         return console.error('Error starting server:', err);
     }
 
-    console.log('Server is running on http://localhost:3021');
+    console.log('Server is running on http://localhost:4021');
 });
