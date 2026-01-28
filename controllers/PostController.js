@@ -21,7 +21,7 @@ export const getLastTags = async (req, res) => {
 
 export const getAll = async (req, res) => {
     try {
-        const posts = await PostModel.find().populate('user').exec();
+        const posts = await PostModel.find().populate({ path: 'user', select: ['fullName', 'avatarUrl'] }).exec();
         res.json(posts);        
     } catch (error) {
         console.error('Error fetching posts:', error);
@@ -85,13 +85,18 @@ export const createPost = async (req, res) => {
 export const removePost = async (req, res) => {
     try {
         const postId = req.params.id;
+        const userId = req.userId;
 
         const post = await PostModel.findOneAndDelete({
             _id: postId,
+            user: userId,
         });
 
         if (!post) {
             return res.status(404).json({ message: 'Post not found' });
+        }
+        if (post.user.toString() !== userId) {
+            return res.status(403).json({ message: 'You are not authorized to delete this post' });
         }
 
         res.json({ message: 'Post deleted successfully' });
