@@ -15,6 +15,7 @@ export const loginValidation = [
 export const postCreateValidation = [
     body('title').isLength({ min: 3 }).withMessage('Title must be at least 3 characters long'),
     body('text').isLength({ min: 3 }).withMessage('Text must be at least 10 characters long'),
-    body('tags').optional().isString().withMessage('Tags must be an array'),
+    body('tags').optional().isArray().withMessage('Tags must be an array'),
+    body('tags.*').optional().isString().withMessage('Each tag must be a string'),
     body('imageUrl').optional().isString().withMessage('Image URL must be a valid URL')
 ];

@@ -51,7 +51,7 @@ export const getOne = async (req, res) => {
         if (!post) {
             return res.status(404).json({ message: 'Post not found' });
         }
-
+        
         res.json(post);
     } catch (error) {
         console.error('Error fetching post:', error);
@@ -111,6 +111,16 @@ export const removePost = async (req, res) => {
 export const updatePost = async (req, res) => {
     try {
         const postId = req.params.id;
+        const userId = req.userId;
+
+        const post = await PostModel.findById(postId);
+
+        if (!post) {
+            return res.status(404).json({ message: 'Post not found' });
+        }
+        if (post.user.toString() !== userId) {
+            return res.status(403).json({ message: 'You are not authorized to update this post' });
+        }
 
         await PostModel.updateOne(
             {
