@@ -21,7 +21,14 @@ export const getLastTags = async (req, res) => {
 
 export const getAll = async (req, res) => {
     try {
-        const posts = await PostModel.find().populate({ path: 'user', select: ['fullName', 'avatarUrl'] }).exec();
+        const { sortBy = 'createdAt', order = 'desc' } = req.query;
+        const sortOrder = order === 'asc' ? 1 : -1;
+        const sortOptions = { [sortBy]: sortOrder };
+        const posts = await PostModel
+        .find()
+        .populate({ path: 'user', select: ['fullName', 'avatarUrl'] })
+        .sort(sortOptions)
+        .exec();
         res.json(posts);        
     } catch (error) {
         console.error('Error fetching posts:', error);
