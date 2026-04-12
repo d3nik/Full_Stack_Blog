@@ -5,7 +5,7 @@ import multer from 'multer';
 import cors from 'cors';
 
 import { loginValidation, postCreateValidation, registerValidation } from './validations.js';
-import { UserController, PostController } from './controllers/index.js';
+import { UserController, PostController, CommentController } from './controllers/index.js';
 import { checkAuth, handleValidationError } from './utils/index.js';
 
 mongoose.connect(
@@ -29,14 +29,17 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
+// Middleware
 app.use(express.json());
 app.use(cors());
 app.use('/uploads', express.static('uploads'));
 
+// Authentication routes
 app.post('/auth/login', loginValidation, handleValidationError, UserController.login);
 app.post('/auth/register', registerValidation, handleValidationError, UserController.register);
 app.get('/auth/me', checkAuth, UserController.getMe);
 
+// File upload route
 app.post('/upload', checkAuth, upload.single('image'), (req, res) => {
     res.json({
         url: `/uploads/${req.file.originalname}`,
@@ -47,15 +50,22 @@ app.post('/upload', checkAuth, upload.single('image'), (req, res) => {
     }
 });
 
-
+// Tags route
 app.get('/tags', PostController.getLastTags);
 
+// Posts routes
 app.get('/posts', PostController.getAll);
 app.get('/posts/:id', PostController.getOne);
 app.post('/posts', checkAuth, postCreateValidation, handleValidationError, PostController.createPost);
 app.delete('/posts/:id', checkAuth, PostController.removePost);
 app.patch('/posts/:id', checkAuth, postCreateValidation, handleValidationError, PostController.updatePost);
 
+// Comments routes
+app.post('/posts/:id/comments', checkAuth, CommentController.createComment);
+app.get('/posts/:id/comments', CommentController.getComments);
+app.delete('/comments/:id', checkAuth, CommentController.removeComment);
+
+// Start the server
 app.listen(4021, (err) => {
     if(err) {
         return console.error('Error starting server:', err);
