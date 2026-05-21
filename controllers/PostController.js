@@ -1,4 +1,6 @@
 import PostModel from '../models/Post.js';
+import CommentModel from '../models/Comment.js';
+import { deleteImage } from '../utils/index.js';
 
 export const getLastTags = async (req, res) => {
     try {
@@ -21,7 +23,14 @@ export const getLastTags = async (req, res) => {
 
 export const getAll = async (req, res) => {
     try {
-        const posts = await PostModel.find().populate({ path: 'user', select: ['fullName', 'avatarUrl'] }).exec();
+        const { sortBy = 'createdAt', order = 'desc' } = req.query;
+        const sortOrder = order === 'asc' ? 1 : -1;
+        const sortOptions = { [sortBy]: sortOrder };
+        const posts = await PostModel
+        .find()
+        .populate({ path: 'user', select: ['fullName', 'avatarUrl'] })
+        .sort(sortOptions)
+        .exec();
         res.json(posts);        
     } catch (error) {
         console.error('Error fetching posts:', error);
@@ -86,19 +95,25 @@ export const removePost = async (req, res) => {
     try {
         const postId = req.params.id;
         const userId = req.userId;
+        const userRole = req.userRole;
 
-        const post = await PostModel.findOneAndDelete({
-            _id: postId,
-            user: userId,
-        });
+        const post = await PostModel.findById(postId);
 
         if (!post) {
             return res.status(404).json({ message: 'Post not found' });
         }
-        if (post.user.toString() !== userId) {
+
+        const isOwner = post.user.toString() === userId;
+        const isAdmin = userRole === 'admin';
+
+        if (!isOwner && !isAdmin) {
             return res.status(403).json({ message: 'You are not authorized to delete this post' });
         }
 
+        deleteImage(post.imageUrl);
+        await CommentModel.deleteMany({ post: postId });
+        await PostModel.findByIdAndDelete(postId);
+        
         res.json({ message: 'Post deleted successfully' });
     } catch (error) {
         console.error('Error deleting post:', error);
@@ -122,6 +137,11 @@ export const updatePost = async (req, res) => {
             return res.status(403).json({ message: 'You are not authorized to update this post' });
         }
 
+        const newImageUrl = req.body.imageUrl;
+        if (newImageUrl && post.imageUrl && newImageUrl !== post.imageUrl) {
+            deleteImage(post.imageUrl);
+        }
+
         await PostModel.updateOne(
             {
                 _id: postId,
@@ -130,7 +150,7 @@ export const updatePost = async (req, res) => {
                 title: req.body.title,
                 text: req.body.text,
                 tags: req.body.tags,
-                imageUrl: req.body.imageUrl,
+                imageUrl: newImageUrl,
                 user: req.userId,
             }
         );

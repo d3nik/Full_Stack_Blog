@@ -12,6 +12,12 @@ export const loginValidation = [
     body('password').isLength({ min: 5 }),
 ];
 
+export const profileUpdateValidation = [
+    body('email').optional().isEmail().withMessage('Email must be valid'),
+    body('fullName').optional().isLength({ min: 3 }).withMessage('Full name must be at least 3 characters'),
+    body('password').optional().isLength({ min: 5 }).withMessage('Password must be at least 5 characters'),
+];
+
 export const postCreateValidation = [
     body('title').isLength({ min: 3 }).withMessage('Title must be at least 3 characters long'),
     body('text').isLength({ min: 3 }).withMessage('Text must be at least 10 characters long'),
