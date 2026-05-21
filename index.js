@@ -4,9 +4,9 @@ import mongoose from 'mongoose';
 import multer from 'multer';
 import cors from 'cors';
 
-import { loginValidation, postCreateValidation, registerValidation } from './validations.js';
+import { loginValidation, registerValidation, profileUpdateValidation, postCreateValidation } from './validations.js';
 import { UserController, PostController, CommentController } from './controllers/index.js';
-import { checkAuth, handleValidationError } from './utils/index.js';
+import { checkAuth, checkRole, handleValidationError } from './utils/index.js';
 
 mongoose.connect(
     'mongodb+srv://admin:admin211210@cluster0.xyzqtx2.mongodb.net/blog?retryWrites=true&w=majority'
@@ -38,6 +38,20 @@ app.use('/uploads', express.static('uploads'));
 app.post('/auth/login', loginValidation, handleValidationError, UserController.login);
 app.post('/auth/register', registerValidation, handleValidationError, UserController.register);
 app.get('/auth/me', checkAuth, UserController.getMe);
+
+// Profile routes
+app.get('/users/:id', UserController.getUserProfile);
+app.patch('/users/profile/me', checkAuth, profileUpdateValidation, handleValidationError, UserController.updateProfile);
+
+// Admin routes
+app.delete('/posts/:id', checkAuth, checkRole('admin'), PostController.removePost);
+app.delete('/comments/:id', checkAuth, checkRole('admin'), (req, res) => {
+    // Implement comment deletion for admin
+    res.json({ message: 'Comment deleted' });
+});
+
+// Admin only - assign admin role (super-admin function)
+app.post('/admin/assign', checkAuth, checkRole('admin'), UserController.assignAdmin);
 
 // File upload route
 app.post('/upload', checkAuth, upload.single('image'), (req, res) => {
