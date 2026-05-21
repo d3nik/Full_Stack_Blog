@@ -9,7 +9,7 @@ import { UserController, PostController, CommentController } from './controllers
 import { checkAuth, handleValidationError } from './utils/index.js';
 
 mongoose.connect(
-    'mongodb+srv://admin:admin211210@cluster0.xyzqtx2.mongodb.net/blog?retryWrites=true&w=majority'
+    process.env.MONGODB_URI || 'mongodb://localhost:27017/blog'
 ).then(() => console.log('DB connected'))
 .catch((err) => console.error('DB connection error:', err));
 
@@ -77,10 +77,10 @@ app.get('/posts/:id/comments', CommentController.getComments);
 // app.delete('/comments/:id', checkAuth(), CommentController.removeComment);
 
 // Start the server
-app.listen(4021, (err) => {
+app.listen(process.env.PORT || 4021, (err) => {
     if(err) {
         return console.error('Error starting server:', err);
     }
 
-    console.log('Server is running on http://localhost:4021');
+    console.log('Server is running on http://localhost:' + (process.env.PORT || 4021));
 });
