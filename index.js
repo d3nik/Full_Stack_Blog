@@ -53,7 +53,7 @@ app.post('/admin/assign', checkAuth('admin'), UserController.assignAdmin);
 // File upload route
 app.post('/upload', checkAuth(), upload.single('image'), (req, res) => {
     res.json({
-        url: `/uploads/${req.file.originalname}`,
+        url: `/uploads/${req.file.filename}`,
     });
 
     if (!req.file) {
