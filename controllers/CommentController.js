@@ -32,7 +32,8 @@ export const getComments = async (req, res) => {
     try {
         const { id } = req.params;
         const comments = await CommentModel.find({ post: id })
-        .populate({ path: 'user', select: ['fullName', 'avatarUrl'] });
+        .populate({ path: 'user', select: '_id fullName avatarUrl' })
+        .lean();
         res.json(comments);
     } catch (error) {
         console.error('Error fetching comments:', error);
@@ -47,22 +48,29 @@ export const removeComment = async (req, res) => {
         const { id } = req.params;
         const comment = await CommentModel.findById(id);
 
+
         if (!comment) {
             return res.status(404).json({
                 message: 'Comment not found',
             });
         }
-        if (comment.user.toString() !== req.userId) {
+
+        const isOwner = comment.user.toString() === req.userId;
+        const isAdmin = req.userRole === 'admin';
+
+        if (!isOwner && !isAdmin) {
             return res.status(403).json({
                 message: 'You are not authorized to delete this comment',
             });
         }
+
         await CommentModel.findByIdAndDelete(id);
         await PostModel.findByIdAndUpdate(
             comment.post,
             { $pull: { comments: id } },
             { new: true }
          ).exec();
+
         res.json({
             message: 'Comment deleted successfully',
         });

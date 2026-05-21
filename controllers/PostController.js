@@ -1,4 +1,5 @@
 import PostModel from '../models/Post.js';
+import CommentModel from '../models/Comment.js';
 
 export const getLastTags = async (req, res) => {
     try {
@@ -93,19 +94,24 @@ export const removePost = async (req, res) => {
     try {
         const postId = req.params.id;
         const userId = req.userId;
+        const userRole = req.userRole;
 
-        const post = await PostModel.findOneAndDelete({
-            _id: postId,
-            user: userId,
-        });
+        const post = await PostModel.findById(postId);
 
         if (!post) {
             return res.status(404).json({ message: 'Post not found' });
         }
-        if (post.user.toString() !== userId) {
+
+        const isOwner = post.user.toString() === userId;
+        const isAdmin = userRole === 'admin';
+
+        if (!isOwner && !isAdmin) {
             return res.status(403).json({ message: 'You are not authorized to delete this post' });
         }
 
+        await CommentModel.deleteMany({ post: postId });
+        await PostModel.findByIdAndDelete(postId);
+        
         res.json({ message: 'Post deleted successfully' });
     } catch (error) {
         console.error('Error deleting post:', error);
