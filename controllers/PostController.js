@@ -1,5 +1,6 @@
 import PostModel from '../models/Post.js';
 import CommentModel from '../models/Comment.js';
+import { deleteImage } from '../utils/index.js';
 
 export const getLastTags = async (req, res) => {
     try {
@@ -109,6 +110,7 @@ export const removePost = async (req, res) => {
             return res.status(403).json({ message: 'You are not authorized to delete this post' });
         }
 
+        deleteImage(post.imageUrl);
         await CommentModel.deleteMany({ post: postId });
         await PostModel.findByIdAndDelete(postId);
         
@@ -135,6 +137,11 @@ export const updatePost = async (req, res) => {
             return res.status(403).json({ message: 'You are not authorized to update this post' });
         }
 
+        const newImageUrl = req.body.imageUrl;
+        if (newImageUrl && post.imageUrl && newImageUrl !== post.imageUrl) {
+            deleteImage(post.imageUrl);
+        }
+
         await PostModel.updateOne(
             {
                 _id: postId,
@@ -143,7 +150,7 @@ export const updatePost = async (req, res) => {
                 title: req.body.title,
                 text: req.body.text,
                 tags: req.body.tags,
-                imageUrl: req.body.imageUrl,
+                imageUrl: newImageUrl,
                 user: req.userId,
             }
         );
